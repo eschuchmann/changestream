@@ -75,7 +75,6 @@ object ChangeStream extends App {
   client.setKeepAliveInterval(config.getLong("mysql.keepalive"))
 
   /** Register the objects that will receive `onEvent` calls and deserialize data **/
-  ChangeStreamEventListener.setConfig(config)
   client.registerEventListener(ChangeStreamEventListener)
   client.setEventDeserializer(ChangestreamEventDeserializer)
 

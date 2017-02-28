@@ -97,6 +97,7 @@ class JsonFormatterActor (
 
   protected val includeData = config.getBoolean("include-data")
   protected val encryptData = if(!includeData) false else config.getBoolean("encryptor.enabled")
+  protected val outputFormatter = if(config.hasPath("output-jsonl") && config.getBoolean("output-jsonl")) (x: JsValue) => x.toString else (x: JsValue) => x.prettyPrint
 
   protected lazy val encryptorActor = context.actorOf(Props(new EncryptorActor(config.getConfig("encryptor"))), name = "encryptorActor")
   protected implicit val TIMEOUT = Timeout(config.getLong("encryptor.timeout") milliseconds)
@@ -134,12 +135,12 @@ class JsonFormatterActor (
           val encryptRequest = Plaintext(json)
           ask(encryptorActor, encryptRequest).map {
             case v: JsValue =>
-              message.copy(formattedMessage = Some(v.prettyPrint))
+              message.copy(formattedMessage = Some(outputFormatter(v)))
           } pipeTo nextHop
         }
         else {
           log.debug(s"Sending JSON event to the ${nextHop.path.name} actor")
-          nextHop ! message.copy(formattedMessage = Some(json.prettyPrint))
+          nextHop ! message.copy(formattedMessage = Some(outputFormatter(json)))
         }
       })
     }
